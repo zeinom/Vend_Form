@@ -1,0 +1,891 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Vend — Add Product</title>
+<link href="https://fonts.googleapis.com/css2?family=El+Messiri:wght@400;500;600;700&display=swap" rel="stylesheet"/>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --navy:#092143;
+  --navy-2:#0c2a57;
+  --navy-3:#112f63;
+  --gold:#FFCA0A;
+  --gold-hover:#ffd740;
+  --white:#ffffff;
+  --muted:#6e89b0;
+  --muted2:#4a6387;
+  --border:rgba(255,255,255,0.08);
+  --border-gold:rgba(255,202,10,0.38);
+  --input-bg:rgba(255,255,255,0.035);
+  --danger:#f06060;
+  --success:#3ecf8e;
+}
+html{scroll-behavior:smooth}
+body{
+  min-height:100vh;
+  background:var(--navy);
+  font-family:'El Messiri',sans-serif;
+  color:var(--white);
+  display:flex;flex-direction:column;align-items:center;
+  padding:36px 16px 80px;
+  overflow-x:hidden;
+}
+body::before{
+  content:'';position:fixed;inset:0;pointer-events:none;
+  background:
+    radial-gradient(ellipse 70% 50% at 0% 0%,rgba(255,202,10,.055) 0%,transparent 55%),
+    radial-gradient(ellipse 50% 70% at 100% 100%,rgba(9,50,100,.5) 0%,transparent 60%);
+}
+
+/* ─── Topbar ──── */
+.topbar{
+  width:100%;max-width:640px;
+  display:flex;align-items:center;justify-content:space-between;
+  margin-bottom:38px;
+  animation:fadeDown .5s ease both;
+}
+.logo-img{
+  width:54px;height:54px;border-radius:12px;
+  object-fit:cover;
+  border:1px solid rgba(255,202,10,.18);
+  box-shadow:0 4px 16px rgba(0,0,0,.3);
+  transition:transform .3s,box-shadow .3s;
+}
+.logo-img:hover{transform:scale(1.05);box-shadow:0 6px 22px rgba(255,202,10,.18)}
+.topbar-info{text-align:right}
+.topbar-info h1{font-size:.98rem;font-weight:600;color:var(--white)}
+.topbar-info p{font-size:.75rem;color:var(--muted);margin-top:2px}
+
+/* ─── Steps ──── */
+.steps{
+  width:100%;max-width:640px;
+  display:flex;align-items:center;
+  margin-bottom:22px;
+  animation:fadeDown .5s .08s ease both;
+}
+.step-item{display:flex;align-items:center;gap:8px;flex-shrink:0}
+.step-num{
+  width:32px;height:32px;border-radius:50%;
+  border:1.5px solid rgba(255,255,255,.12);
+  display:flex;align-items:center;justify-content:center;
+  font-size:.78rem;font-weight:700;color:var(--muted);
+  transition:all .4s cubic-bezier(.4,0,.2,1);
+  position:relative;
+}
+.step-num::after{
+  content:'';position:absolute;inset:-4px;border-radius:50%;
+  border:1.5px solid transparent;
+  transition:border-color .4s,transform .4s;
+}
+.step-label{font-size:.75rem;color:var(--muted);transition:color .3s;white-space:nowrap}
+.step-line{flex:1;height:1px;background:rgba(255,255,255,.07);margin:0 10px;transition:background .5s}
+.step-item.active .step-num{background:var(--gold);border-color:var(--gold);color:var(--navy);transform:scale(1.08)}
+.step-item.active .step-num::after{border-color:rgba(255,202,10,.25);transform:scale(1.3)}
+.step-item.active .step-label{color:var(--gold);font-weight:600}
+.step-item.done .step-num{background:var(--success);border-color:var(--success);color:var(--navy)}
+.step-item.done .step-label{color:var(--success)}
+.step-line.done{background:var(--success)}
+
+/* ─── Card ──── */
+.card{
+  width:100%;max-width:640px;
+  background:rgba(255,255,255,.028);
+  border:1px solid var(--border);
+  border-radius:20px;
+  overflow:hidden;
+  position:relative;
+  animation:fadeUp .5s .15s ease both;
+}
+.card::before{
+  content:'';position:absolute;top:0;left:0;right:0;height:2px;
+  background:linear-gradient(90deg,transparent,var(--gold),transparent);
+  opacity:.35;
+}
+
+/* ─── Step Panels ──── */
+.step-panel{
+  padding:36px;
+  position:absolute;width:100%;
+  transition:opacity .35s ease,transform .35s cubic-bezier(.4,0,.2,1);
+}
+.step-panel.entering{opacity:0;transform:translateX(40px);pointer-events:none}
+.step-panel.leaving{opacity:0;transform:translateX(-40px);pointer-events:none}
+.step-panel.visible{opacity:1;transform:translateX(0);position:relative}
+
+.card-title{font-size:1.18rem;font-weight:700;margin-bottom:4px}
+.card-sub{font-size:.79rem;color:var(--muted);margin-bottom:26px;line-height:1.5}
+
+/* ─── Fields ──── */
+.row{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+.field{margin-bottom:16px}
+label{
+  display:block;font-size:.7rem;font-weight:700;
+  text-transform:uppercase;letter-spacing:.06em;
+  color:var(--muted);margin-bottom:6px;
+  transition:color .2s;
+}
+.field:focus-within label{color:var(--gold)}
+label .req{color:var(--gold);margin-left:2px}
+label .opt{
+  font-size:.68rem;font-weight:400;text-transform:none;
+  letter-spacing:0;color:var(--muted2);margin-left:4px;
+}
+input[type=text],input[type=number],textarea,select{
+  width:100%;
+  background:var(--input-bg);
+  border:1.5px solid var(--border);
+  border-radius:9px;
+  color:var(--white);
+  font-family:'El Messiri',sans-serif;
+  font-size:.9rem;
+  padding:10px 13px;
+  outline:none;
+  transition:border-color .25s,background .25s,box-shadow .25s,transform .2s;
+  -webkit-appearance:none;appearance:none;
+}
+input:focus,textarea:focus,select:focus{
+  border-color:var(--gold);
+  background:rgba(255,202,10,.04);
+  box-shadow:0 0 0 3px rgba(255,202,10,.1);
+  transform:translateY(-1px);
+}
+input::placeholder,textarea::placeholder{color:var(--muted2)}
+select option{background:#0c2a57;color:#fff}
+textarea{resize:vertical;min-height:86px}
+.sel-wrap{position:relative}
+.sel-wrap::after{
+  content:'▾';position:absolute;right:12px;top:50%;
+  transform:translateY(-50%);color:var(--gold);pointer-events:none;font-size:.78rem;
+}
+input.err,textarea.err{border-color:var(--danger)!important;box-shadow:0 0 0 3px rgba(240,96,96,.12)!important}
+.err-msg{
+  font-size:.7rem;color:var(--danger);margin-top:4px;
+  display:none;animation:errIn .2s ease;
+}
+@keyframes errIn{from{opacity:0;transform:translateY(-3px)}to{opacity:1;transform:translateY(0)}}
+
+/* ─── Type Selector ──── */
+.type-row{display:flex;gap:10px;margin-bottom:2px}
+.type-opt{flex:1;position:relative}
+.type-opt input{position:absolute;opacity:0;width:0;height:0}
+.type-opt label{
+  display:flex;flex-direction:column;align-items:center;
+  padding:13px 8px 11px;border-radius:10px;
+  border:1.5px solid var(--border);
+  background:var(--input-bg);
+  cursor:pointer;
+  transition:all .25s cubic-bezier(.4,0,.2,1);
+  text-transform:none;letter-spacing:0;
+  font-size:.86rem;font-weight:600;
+  color:var(--muted);gap:7px;margin-bottom:0;
+}
+.type-opt label:hover{border-color:rgba(255,202,10,.3);color:rgba(255,202,10,.7);transform:translateY(-2px)}
+.type-opt label svg{width:20px;height:20px;stroke:currentColor;fill:none;stroke-width:1.7;transition:transform .25s}
+.type-opt label:hover svg{transform:scale(1.15)}
+.type-opt input:checked+label{
+  color:var(--gold);background:rgba(255,202,10,.08);
+  border-color:var(--gold);transform:translateY(-2px);
+  box-shadow:0 4px 14px rgba(255,202,10,.12);
+}
+
+/* ─── Priority ──── */
+.pri-row{display:flex;gap:10px}
+.pri-opt{flex:1;position:relative}
+.pri-opt input{position:absolute;opacity:0;width:0;height:0}
+.pri-opt label{
+  display:flex;align-items:center;justify-content:center;
+  gap:7px;padding:10px;border-radius:9px;
+  border:1.5px solid var(--border);background:var(--input-bg);
+  cursor:pointer;
+  transition:all .25s cubic-bezier(.4,0,.2,1);
+  text-transform:none;letter-spacing:0;
+  font-size:.83rem;font-weight:600;color:var(--muted);margin-bottom:0;
+}
+.pri-opt label:hover{transform:translateY(-1px)}
+.dot{width:7px;height:7px;border-radius:50%;background:currentColor;flex-shrink:0;transition:transform .2s}
+.pri-h input:checked+label{color:#f06060;background:rgba(240,96,96,.08);border-color:#f06060;box-shadow:0 3px 12px rgba(240,96,96,.12)}
+.pri-m input:checked+label{color:var(--gold);background:rgba(255,202,10,.08);border-color:var(--gold);box-shadow:0 3px 12px rgba(255,202,10,.12)}
+.pri-l input:checked+label{color:var(--success);background:rgba(62,207,142,.08);border-color:var(--success);box-shadow:0 3px 12px rgba(62,207,142,.12)}
+.pri-opt input:checked+label .dot{transform:scale(1.5)}
+
+/* ─── Conditional ──── */
+.cond{overflow:hidden;max-height:0;transition:max-height .35s cubic-bezier(.4,0,.2,1),opacity .3s ease}
+.cond.show{max-height:200px;opacity:1}
+.cond{opacity:0}
+
+/* ─── Upload Zone ──── */
+.upzone{
+  border:1.5px dashed rgba(255,255,255,.1);
+  border-radius:11px;cursor:pointer;
+  transition:all .3s cubic-bezier(.4,0,.2,1);
+  position:relative;background:var(--input-bg);
+  overflow:hidden;
+}
+.upzone:not(.has-file):not(.has-gal):hover{
+  border-color:var(--gold);
+  background:rgba(255,202,10,.03);
+  transform:translateY(-2px);
+  box-shadow:0 6px 20px rgba(255,202,10,.08);
+}
+.upzone.drag-over{border-color:var(--gold)!important;background:rgba(255,202,10,.06)!important;transform:translateY(-2px)}
+.up-empty{padding:22px;text-align:center}
+.upzone.has-file .up-empty,.upzone.has-gal .up-empty{display:none}
+.up-icon{
+  width:40px;height:40px;border-radius:50%;
+  background:rgba(255,202,10,.08);border:1.5px solid rgba(255,202,10,.2);
+  display:flex;align-items:center;justify-content:center;
+  margin:0 auto 10px;transition:transform .3s,background .3s;
+}
+.upzone:not(.has-file):not(.has-gal):hover .up-icon{transform:scale(1.1) translateY(-2px);background:rgba(255,202,10,.14)}
+.up-icon svg{width:18px;height:18px;stroke:var(--gold);fill:none;stroke-width:1.8}
+.up-empty p{font-size:.79rem;color:var(--muted)}
+.up-empty p span{color:var(--gold);font-weight:600}
+.up-hint{font-size:.68rem!important;color:var(--muted2)!important;margin-top:3px}
+/* Main filled */
+.up-main-filled{display:none;position:relative}
+.upzone.has-file .up-main-filled{display:block;animation:fadeUp .3s ease}
+.up-main-filled img{width:100%;height:210px;object-fit:cover;display:block}
+.up-change-btn{
+  position:absolute;bottom:10px;right:10px;
+  padding:6px 14px;border-radius:7px;
+  background:rgba(9,33,67,.78);backdrop-filter:blur(6px);
+  border:1px solid rgba(255,202,10,.45);
+  color:var(--gold);font-family:'El Messiri',sans-serif;
+  font-size:.75rem;font-weight:600;cursor:pointer;
+  transition:all .2s;
+}
+.up-change-btn:hover{background:rgba(9,33,67,.95);border-color:var(--gold)}
+/* Gallery filled */
+.up-gal-grid{display:none;padding:14px;flex-wrap:wrap;gap:10px;align-items:flex-start}
+.upzone.has-gal .up-gal-grid{display:flex}
+@keyframes popIn{from{opacity:0;transform:scale(.7)}to{opacity:1;transform:scale(1)}}
+.gal-item{
+  position:relative;width:110px;height:110px;flex-shrink:0;
+  animation:popIn .25s cubic-bezier(.175,.885,.32,1.275) both;
+}
+.gal-item img{
+  width:100%;height:100%;object-fit:cover;
+  border-radius:8px;border:1.5px solid rgba(255,202,10,.22);display:block;
+}
+.gal-rm{
+  position:absolute;top:-7px;right:-7px;
+  width:20px;height:20px;border-radius:50%;
+  background:#f06060;border:2px solid var(--navy);color:#fff;
+  font-size:11px;cursor:pointer;z-index:2;
+  display:flex;align-items:center;justify-content:center;
+  font-family:sans-serif;font-weight:700;
+  transition:transform .2s,background .2s;
+}
+.gal-rm:hover{transform:scale(1.2);background:#d94f4f}
+.gal-add-more{
+  width:110px;height:110px;border-radius:8px;
+  border:1.5px dashed rgba(255,202,10,.3);
+  background:rgba(255,202,10,.04);flex-shrink:0;
+  display:flex;flex-direction:column;align-items:center;justify-content:center;
+  gap:6px;cursor:pointer;
+  color:rgba(255,202,10,.65);font-size:.72rem;font-weight:600;
+  transition:all .2s;font-family:'El Messiri',sans-serif;
+}
+.gal-add-more:hover{border-color:var(--gold);color:var(--gold);background:rgba(255,202,10,.09)}
+.gal-add-more svg{width:22px;height:22px;stroke:currentColor;fill:none;stroke-width:2}
+
+/* ─── Divider ──── */
+.divider{height:1px;background:rgba(255,255,255,.055);margin:4px 0 20px}
+
+/* ─── Packages Builder ──── */
+.pkg-list{display:flex;flex-direction:column;gap:10px;margin-bottom:12px}
+.pkg-card{
+  background:rgba(255,255,255,.04);
+  border:1px solid rgba(255,255,255,.09);
+  border-radius:11px;padding:14px 16px;
+  position:relative;
+  animation:slideIn .28s cubic-bezier(.4,0,.2,1) both;
+}
+@keyframes slideIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
+.pkg-card .row{gap:10px}
+.pkg-card input{font-size:.84rem;padding:8px 11px}
+.pkg-rm{
+  position:absolute;top:10px;right:10px;
+  width:24px;height:24px;border-radius:6px;
+  background:rgba(240,96,96,.12);border:1px solid rgba(240,96,96,.25);
+  color:#f06060;cursor:pointer;
+  display:flex;align-items:center;justify-content:center;font-size:.7rem;
+  transition:all .2s;font-family:sans-serif;font-weight:700;
+}
+.pkg-rm:hover{background:rgba(240,96,96,.25);transform:scale(1.1)}
+.btn-add-pkg{
+  width:100%;padding:9px;border-radius:9px;
+  border:1.5px dashed rgba(255,202,10,.3);
+  background:rgba(255,202,10,.04);
+  color:rgba(255,202,10,.7);
+  font-family:'El Messiri',sans-serif;font-size:.84rem;font-weight:600;
+  cursor:pointer;transition:all .25s;
+  display:flex;align-items:center;justify-content:center;gap:6px;
+}
+.btn-add-pkg:hover{
+  border-color:var(--gold);color:var(--gold);
+  background:rgba(255,202,10,.08);transform:translateY(-1px);
+}
+
+/* ─── Nav ──── */
+.nav{
+  display:flex;justify-content:space-between;align-items:center;
+  margin-top:28px;padding-top:20px;
+  border-top:1px solid rgba(255,255,255,.055);
+}
+.btn{
+  padding:11px 26px;border-radius:9px;
+  font-family:'El Messiri',sans-serif;
+  font-size:.88rem;font-weight:700;
+  cursor:pointer;transition:all .25s cubic-bezier(.4,0,.2,1);
+  border:none;position:relative;overflow:hidden;
+}
+.btn::after{
+  content:'';position:absolute;inset:0;
+  background:rgba(255,255,255,.1);
+  opacity:0;transition:opacity .2s;
+}
+.btn:active::after{opacity:1}
+.btn-ghost{
+  background:transparent;
+  border:1.5px solid rgba(255,255,255,.12);
+  color:var(--muted);
+}
+.btn-ghost:hover{border-color:rgba(255,255,255,.3);color:var(--white);transform:translateX(-2px)}
+.btn-gold{background:var(--gold);color:var(--navy)}
+.btn-gold:hover{background:var(--gold-hover);transform:translateY(-2px);box-shadow:0 8px 24px rgba(255,202,10,.24)}
+.btn-gold:active{transform:translateY(0)!important}
+.btn-gold:disabled{opacity:.5;cursor:not-allowed;transform:none!important;box-shadow:none!important}
+.spin{
+  display:inline-block;width:13px;height:13px;
+  border:2px solid var(--navy);border-top-color:transparent;
+  border-radius:50%;animation:sp .6s linear infinite;
+  margin-right:6px;vertical-align:middle;
+}
+@keyframes sp{to{transform:rotate(360deg)}}
+
+/* ─── Progress bar ──── */
+.prog-bar{
+  width:100%;max-width:640px;
+  height:2px;background:rgba(255,255,255,.06);
+  border-radius:2px;margin-bottom:12px;
+  animation:fadeDown .5s .05s ease both;
+  overflow:hidden;
+}
+.prog-fill{height:100%;background:var(--gold);border-radius:2px;transition:width .5s cubic-bezier(.4,0,.2,1)}
+
+/* ─── Success ──── */
+#success{
+  display:none;text-align:center;padding:52px 24px;
+  animation:fadeUp .4s ease both;
+}
+.s-ring{
+  width:76px;height:76px;border-radius:50%;
+  border:2px solid var(--success);
+  display:flex;align-items:center;justify-content:center;
+  margin:0 auto 22px;
+  position:relative;
+}
+.s-ring::before{
+  content:'';position:absolute;inset:-8px;border-radius:50%;
+  border:1px solid rgba(62,207,142,.2);
+  animation:pulse 2s infinite;
+}
+@keyframes pulse{0%,100%{opacity:1;transform:scale(1)}50%{opacity:.4;transform:scale(1.08)}}
+.s-check-icon{font-size:2rem;animation:popIn .4s .1s cubic-bezier(.175,.885,.32,1.275) both}
+#success h2{font-size:1.25rem;margin-bottom:10px}
+#success p{font-size:.83rem;color:var(--muted);margin-bottom:26px;line-height:1.8}
+#success strong{color:var(--gold)}
+
+/* ─── Animations ──── */
+@keyframes fadeDown{from{opacity:0;transform:translateY(-12px)}to{opacity:1;transform:translateY(0)}}
+@keyframes fadeUp{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:translateY(0)}}
+
+/* ─── Responsive ──── */
+@media(max-width:500px){
+  .step-panel{padding:24px 16px}
+  .row{grid-template-columns:1fr}
+  .type-row,.pri-row{flex-direction:column}
+  .topbar-info h1{font-size:.88rem}
+}
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <img class="logo-img" src="data:image/jpeg;base64,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" alt="Vend Logo"/>
+  <div class="topbar-info">
+    <h1>New Product Submission</h1>
+    <p>vendegypt.com · Internal Team</p>
+  </div>
+</div>
+
+<div class="prog-bar"><div class="prog-fill" id="progFill" style="width:33%"></div></div>
+
+<div class="steps">
+  <div class="step-item active" id="si1">
+    <div class="step-num" id="sn1">1</div>
+    <span class="step-label">Product Info</span>
+  </div>
+  <div class="step-line" id="sl1"></div>
+  <div class="step-item" id="si2">
+    <div class="step-num" id="sn2">2</div>
+    <span class="step-label">Media</span>
+  </div>
+  <div class="step-line" id="sl2"></div>
+  <div class="step-item" id="si3">
+    <div class="step-num" id="sn3">3</div>
+    <span class="step-label">Extras</span>
+  </div>
+</div>
+
+<div class="card" id="mainCard">
+
+  <!-- Step 1 -->
+  <div id="s1" class="step-panel visible">
+    <div class="card-title">Product Information</div>
+    <div class="card-sub">Required: name, type, and price. Everything else is optional.</div>
+
+    <div class="field">
+      <label>Item Name <span class="req">*</span></label>
+      <input type="text" id="item_name" placeholder="e.g. Wireless Headphones Pro"/>
+      <div class="err-msg" id="e-item_name">Item name is required</div>
+    </div>
+
+    <div class="field">
+      <label>Product Type <span class="opt">optional</span></label>
+      <div class="type-row">
+        <div class="type-opt">
+          <input type="radio" name="type" id="t_simple" value="Simple"/>
+          <label for="t_simple">
+            <svg viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M9 9h6M9 12h6M9 15h4"/></svg>
+            Simple
+          </label>
+        </div>
+        <div class="type-opt">
+          <input type="radio" name="type" id="t_variable" value="Variable"/>
+          <label for="t_variable">
+            <svg viewBox="0 0 24 24"><path d="M3 6h18M3 12l4-4 4 4 4-4 4 4M3 18h18"/></svg>
+            Variable
+          </label>
+        </div>
+        <div class="type-opt">
+          <input type="radio" name="type" id="t_rental" value="Rental"/>
+          <label for="t_rental">
+            <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 3"/></svg>
+            Rental
+          </label>
+        </div>
+      </div>
+    </div>
+
+    <div class="cond" id="var-field">
+      <div class="field" style="margin-top:2px">
+        <label>Variations <span class="opt">e.g. Size: S, M, L | Color: Red, Blue</span></label>
+        <textarea id="variations" placeholder="Describe all available variations..."></textarea>
+      </div>
+    </div>
+
+    <div class="row">
+      <div class="field">
+        <label>Price <span class="req">*</span></label>
+        <input type="text" id="price" placeholder="e.g. 350 EGP / From 200 EGP"/>
+        <div class="err-msg" id="e-price">Price is required</div>
+      </div>
+      <div class="field">
+        <label>Supplier <span class="opt">optional</span></label>
+        <input type="text" id="supplier" placeholder="Supplier name"/>
+      </div>
+    </div>
+
+    <div class="field">
+      <label>Priority <span class="opt">optional</span></label>
+      <div class="pri-row">
+        <div class="pri-opt pri-h">
+          <input type="radio" name="priority" id="p_high" value="High"/>
+          <label for="p_high"><span class="dot"></span>High</label>
+        </div>
+        <div class="pri-opt pri-m">
+          <input type="radio" name="priority" id="p_med" value="Medium"/>
+          <label for="p_med"><span class="dot"></span>Medium</label>
+        </div>
+        <div class="pri-opt pri-l">
+          <input type="radio" name="priority" id="p_low" value="Low"/>
+          <label for="p_low"><span class="dot"></span>Low</label>
+        </div>
+      </div>
+    </div>
+
+    <div class="nav">
+      <span></span>
+      <button class="btn btn-gold" onclick="go(2)">Next: Media &rarr;</button>
+    </div>
+  </div>
+
+  <!-- Step 2 -->
+  <div id="s2" class="step-panel entering" style="display:none">
+    <div class="card-title">Product Media</div>
+    <div class="card-sub">One main image required. Gallery images are optional.</div>
+
+    <div class="field">
+      <label>Main Image <span class="req">*</span></label>
+      <div class="upzone" id="mz" onclick="mzClick(event)">
+        <input type="file" id="main_image" accept="image/*" style="display:none" onchange="prevMain(this)"/>
+        <div class="up-empty">
+          <div class="up-icon">
+            <svg viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+          </div>
+          <p><span>Click or Ctrl+V</span> to upload &middot; drag &amp; drop</p>
+          <p class="up-hint">JPG, PNG, WEBP &middot; max 5 MB &middot; single image</p>
+        </div>
+        <div class="up-main-filled">
+          <img id="mi" alt="Main image preview"/>
+          <button class="up-change-btn" onclick="event.stopPropagation();document.getElementById('main_image').click()">&#8635; Change</button>
+        </div>
+      </div>
+      <div class="err-msg" id="e-main_image">Main image is required</div>
+    </div>
+
+    <div class="divider"></div>
+
+    <div class="field">
+      <label>Gallery <span class="opt">optional &mdash; multiple images</span></label>
+      <div class="upzone" id="gz" onclick="gzClick(event)">
+        <input type="file" id="gallery" accept="image/*" multiple style="display:none" onchange="prevGal(this)"/>
+        <div class="up-empty">
+          <div class="up-icon">
+            <svg viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
+          </div>
+          <p><span>Click or Ctrl+V</span> to upload &middot; drag &amp; drop</p>
+          <p class="up-hint">JPG, PNG, WEBP &middot; max 5 MB each</p>
+        </div>
+        <div class="up-gal-grid" id="gp"></div>
+      </div>
+    </div>
+
+    <div class="nav">
+      <button class="btn btn-ghost" onclick="go(1)">&larr; Back</button>
+      <button class="btn btn-gold" onclick="go(3)">Next: Extras &rarr;</button>
+    </div>
+  </div>
+
+  <!-- Step 3 -->
+  <div id="s3" class="step-panel entering" style="display:none">
+    <div class="card-title">Additional Details</div>
+    <div class="card-sub">All optional &mdash; fill in only what applies.</div>
+
+    <div class="row">
+      <div class="field">
+        <label>Typing Price <span class="opt">if applicable</span></label>
+        <input type="text" id="typing_price" placeholder="e.g. per letter, custom text"/>
+      </div>
+      <div class="field">
+        <label>Add-ons <span class="opt">if applicable</span></label>
+        <input type="text" id="addons" placeholder="e.g. Gift wrapping, Warranty"/>
+      </div>
+    </div>
+
+    <div class="field">
+      <label>Packages <span class="opt">optional &mdash; add pricing tiers</span></label>
+      <div class="pkg-list" id="pkgList"></div>
+      <button class="btn-add-pkg" onclick="addPkg()">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+        Add Package
+      </button>
+    </div>
+
+    <div class="field">
+      <label>Notes <span class="opt">remarks for the upload team</span></label>
+      <textarea id="notes" placeholder="Special instructions, sizing notes, supplier details..."></textarea>
+    </div>
+
+    <div class="nav">
+      <button class="btn btn-ghost" onclick="go(2)">&larr; Back</button>
+      <button class="btn btn-gold" id="subBtn" onclick="doSubmit()">Submit Product &check;</button>
+    </div>
+  </div>
+
+  <!-- Success -->
+  <div id="success" class="step-panel">
+    <div class="s-ring"><span class="s-check-icon">&#10003;</span></div>
+    <h2>Product Submitted!</h2>
+    <p>Added to the sheet with status <strong>Draft</strong>.<br/>Assigned to <strong>Omar</strong> for review and upload.</p>
+    <button class="btn btn-gold" onclick="resetForm()">+ Add Another Product</button>
+  </div>
+
+</div>
+
+<script>
+const GAS_URL = "https://script.google.com/macros/s/AKfycbzemGyM_kmXSjGAXG2CChvAJubjGgwHXH1soNUqs4qmFE12FNRzWen4piQFZ85EmzbO/exec";
+
+let cur = 1;
+let mainFile = null;
+let galFiles = [];
+let pkgCount = 0;
+let lastZone = 'main';
+const TOTAL = 3;
+
+function setCardHeight(){
+  const panel = document.querySelector('.step-panel.visible');
+  if(panel) document.getElementById('mainCard').style.height = '';
+}
+
+function go(n){
+  if(n > cur && !validate(cur)) return;
+  const leaving = document.getElementById('s'+cur);
+  const entering = document.getElementById('s'+n);
+  leaving.classList.remove('visible');
+  leaving.classList.add('leaving');
+  setTimeout(()=>{leaving.style.display='none';leaving.classList.remove('leaving')},340);
+  entering.style.display='block';
+  entering.classList.remove('visible');
+  entering.classList.add('entering');
+  setTimeout(()=>{entering.classList.remove('entering');entering.classList.add('visible')},20);
+  cur = n;
+  syncSteps();
+  document.getElementById('progFill').style.width = (cur/TOTAL*100)+'%';
+  window.scrollTo({top:0,behavior:'smooth'});
+}
+
+function syncSteps(){
+  for(let i=1;i<=3;i++){
+    const si=document.getElementById('si'+i);
+    const sn=document.getElementById('sn'+i);
+    si.classList.remove('active','done');
+    if(i<cur){si.classList.add('done');sn.textContent='✓'}
+    if(i===cur){si.classList.add('active');sn.textContent=i}
+    if(i>cur){sn.textContent=i}
+  }
+  for(let i=1;i<=2;i++) document.getElementById('sl'+i).classList.toggle('done',i<cur);
+}
+
+function validate(step){
+  let ok=true;
+  const se=(id,show)=>{
+    const el=document.getElementById(id);
+    const em=document.getElementById('e-'+id);
+    if(el) el.classList.toggle('err',show);
+    if(em) em.style.display=show?'block':'none';
+    if(show) ok=false;
+  };
+  if(step===1){
+    se('item_name',!v('item_name'));
+    se('price',!v('price'));
+  }
+  if(step===2) se('main_image',!mainFile);
+  return ok;
+}
+function v(id){return document.getElementById(id).value.trim()}
+
+document.querySelectorAll('input[name="type"]').forEach(r=>{
+  r.addEventListener('change',()=>{
+    document.getElementById('var-field').classList.toggle('show',r.value==='Variable'&&r.checked);
+  });
+});
+
+/* ─ Upload Click Handlers ─ */
+function mzClick(e){
+  if(e.target.classList.contains('up-change-btn'))return;
+  document.getElementById('main_image').click();
+}
+function gzClick(e){
+  if(e.target.closest('.gal-item')||e.target.closest('.gal-rm')||e.target.closest('.gal-add-more'))return;
+  document.getElementById('gallery').click();
+}
+
+/* ─ Hover zone tracking for paste ─ */
+document.getElementById('mz').addEventListener('mouseenter',()=>lastZone='main');
+document.getElementById('gz').addEventListener('mouseenter',()=>lastZone='gal');
+
+/* ─ Drag & Drop ─ */
+(function initDnD(){
+  const mz=document.getElementById('mz');
+  mz.addEventListener('dragover',e=>{e.preventDefault();mz.classList.add('drag-over')});
+  mz.addEventListener('dragleave',()=>mz.classList.remove('drag-over'));
+  mz.addEventListener('drop',e=>{
+    e.preventDefault();mz.classList.remove('drag-over');
+    const f=e.dataTransfer.files[0];
+    if(f&&f.type.startsWith('image/'))applyMain(f);
+  });
+  const gz=document.getElementById('gz');
+  gz.addEventListener('dragover',e=>{e.preventDefault();gz.classList.add('drag-over')});
+  gz.addEventListener('dragleave',()=>gz.classList.remove('drag-over'));
+  gz.addEventListener('drop',e=>{
+    e.preventDefault();gz.classList.remove('drag-over');
+    const files=Array.from(e.dataTransfer.files).filter(f=>f.type.startsWith('image/'));
+    galFiles=[...galFiles,...files];renderGal();
+  });
+})();
+
+/* ─ Paste (Ctrl+V) ─ */
+document.addEventListener('paste',function(e){
+  const imgItem=Array.from(e.clipboardData.items).find(i=>i.type.startsWith('image/'));
+  if(!imgItem)return;
+  e.preventDefault();
+  const f=imgItem.getAsFile();if(!f)return;
+  if(!mainFile||lastZone==='main'){applyMain(f);}
+  else{galFiles.push(f);renderGal();}
+});
+
+function prevMain(inp){const f=inp.files[0];if(f)applyMain(f);}
+function applyMain(f){
+  mainFile=f;
+  const rd=new FileReader();
+  rd.onload=e=>{
+    document.getElementById('mi').src=e.target.result;
+    document.getElementById('mz').classList.add('has-file');
+    document.getElementById('e-main_image').style.display='none';
+  };
+  rd.readAsDataURL(f);
+}
+
+function prevGal(inp){galFiles=[...galFiles,...Array.from(inp.files)];renderGal();}
+function renderGal(){
+  const c=document.getElementById('gp');
+  const gz=document.getElementById('gz');
+  c.innerHTML='';
+  if(!galFiles.length){gz.classList.remove('has-gal');return;}
+  gz.classList.add('has-gal');
+  galFiles.forEach((f,i)=>{
+    const rd=new FileReader();
+    rd.onload=e=>{
+      const d=document.createElement('div');
+      d.className='gal-item';
+      d.innerHTML=`<img src="${e.target.result}" alt=""/><button class="gal-rm" onclick="event.stopPropagation();rmGal(${i})">&#215;</button>`;
+      const add=c.querySelector('.gal-add-more');
+      add?c.insertBefore(d,add):c.appendChild(d);
+    };
+    rd.readAsDataURL(f);
+  });
+  const add=document.createElement('div');
+  add.className='gal-add-more';
+  add.innerHTML='<svg viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>Add More';
+  add.onclick=function(e){e.stopPropagation();document.getElementById('gallery').click();};
+  c.appendChild(add);
+}
+function rmGal(i){galFiles.splice(i,1);renderGal();}
+
+/* Packages */
+function addPkg(){
+  pkgCount++;
+  const id=pkgCount;
+  const list=document.getElementById('pkgList');
+  const div=document.createElement('div');
+  div.className='pkg-card';div.id='pkg-'+id;
+  div.innerHTML=`
+    <button class="pkg-rm" onclick="rmPkg(${id})" title="Remove">&#215;</button>
+    <div class="row" style="grid-template-columns:1fr 1fr 1fr;gap:10px">
+      <div class="field" style="margin-bottom:0">
+        <label style="font-size:.65rem">Package Name</label>
+        <input type="text" class="pkg-name" placeholder="e.g. 5 pieces"/>
+      </div>
+      <div class="field" style="margin-bottom:0">
+        <label style="font-size:.65rem">Details</label>
+        <input type="text" class="pkg-details" placeholder="What's included"/>
+      </div>
+      <div class="field" style="margin-bottom:0">
+        <label style="font-size:.65rem">Price</label>
+        <input type="text" class="pkg-price" placeholder="e.g. 450 EGP"/>
+      </div>
+    </div>
+  `;
+  list.appendChild(div);
+}
+function rmPkg(id){
+  const el=document.getElementById('pkg-'+id);
+  if(el){el.style.opacity='0';el.style.transform='translateY(-4px)';el.style.transition='all .2s';setTimeout(()=>el.remove(),200)}
+}
+
+function getPkgs(){
+  const cards=document.querySelectorAll('.pkg-card');
+  const out=[];
+  cards.forEach(c=>{
+    const n=c.querySelector('.pkg-name').value.trim();
+    const d=c.querySelector('.pkg-details').value.trim();
+    const p=c.querySelector('.pkg-price').value.trim();
+    if(n||d||p) out.push({name:n,details:d,price:p});
+  });
+  return out;
+}
+
+async function toB64(f){
+  return new Promise((res,rej)=>{
+    const r=new FileReader();
+    r.onload=()=>res(r.result.split(',')[1]);
+    r.onerror=rej;
+    r.readAsDataURL(f);
+  });
+}
+
+async function doSubmit(){
+  if(!validate(3))return;
+  const btn=document.getElementById('subBtn');
+  btn.disabled=true;
+  btn.innerHTML='<span class="spin"></span>Submitting...';
+  try{
+    const mf=mainFile;
+    const mB64=await toB64(mf);
+    const gB64=await Promise.all(galFiles.map(f=>toB64(f)));
+    const typ=document.querySelector('input[name="type"]:checked');
+    const pri=document.querySelector('input[name="priority"]:checked');
+    const payload={
+      item_name:   v('item_name'),
+      main_image:  {b64:mB64,name:mf.name,mime:mf.type},
+      gallery:     galFiles.map((f,i)=>({b64:gB64[i],name:f.name,mime:f.type})),
+      type:        typ?typ.value:'',
+      price:       v('price'),
+      variations:  typ&&typ.value==='Variable'?v('variations'):'',
+      priority:    pri?pri.value:'',
+      typing_price:v('typing_price'),
+      packages:    JSON.stringify(getPkgs()),
+      addons:      v('addons'),
+      supplier:    v('supplier'),
+      notes:       v('notes'),
+      assigned_to: 'Omar',
+      status:      'Draft',
+      submitted_at:new Date().toLocaleString('en-EG')
+    };
+    await fetch(GAS_URL,{method:'POST',mode:'no-cors',headers:{'Content-Type':'application/json'},body:JSON.stringify(payload)});
+    document.getElementById('s3').classList.remove('visible');
+    document.getElementById('s3').style.display='none';
+    document.getElementById('progFill').style.width='100%';
+    for(let i=1;i<=3;i++){
+      document.getElementById('si'+i).classList.remove('active');
+      document.getElementById('si'+i).classList.add('done');
+      document.getElementById('sn'+i).textContent='✓';
+    }
+    document.getElementById('sl1').classList.add('done');
+    document.getElementById('sl2').classList.add('done');
+    const s=document.getElementById('success');
+    s.style.display='block';s.classList.add('visible');
+  }catch(err){
+    alert('Something went wrong. Please try again.\n\n'+err.message);
+    btn.disabled=false;btn.textContent='Submit Product ✓';
+  }
+}
+
+function resetForm(){
+  document.querySelectorAll('input[type=text],textarea').forEach(el=>el.value='');
+  document.querySelectorAll('input[type=radio]').forEach(el=>el.checked=false);
+  mainFile=null;
+  document.getElementById('main_image').value='';
+  document.getElementById('gallery').value='';
+  document.getElementById('mz').classList.remove('has-file');
+  document.getElementById('gz').classList.remove('has-gal');
+  document.getElementById('gp').innerHTML='';
+  document.getElementById('var-field').classList.remove('show');
+  document.getElementById('pkgList').innerHTML='';
+  galFiles=[];pkgCount=0;
+  document.getElementById('success').style.display='none';
+  document.getElementById('success').classList.remove('visible');
+  cur=1;
+  const s1=document.getElementById('s1');
+  s1.style.display='block';s1.classList.remove('entering','leaving');s1.classList.add('visible');
+  document.getElementById('progFill').style.width='33%';
+  syncSteps();
+}
+</script>
+</body>
+</html>
